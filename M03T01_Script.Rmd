@@ -16,7 +16,6 @@ barplot(table(suma.dados),col=c(rep('red',10),rep('grey',11)))
 mean(suma.dados)
 sum(suma.dados<14)/1000
 
-x <-- 1:10
 ```
 
 La esperanza matemática es $E(X)=13.896$ y la probabilidad $Pr(X<14)=0.465$.
