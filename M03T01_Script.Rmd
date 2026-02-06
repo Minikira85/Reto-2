@@ -5,9 +5,9 @@ output: html_notebook
 
 # PROBABILIDAD CON R
 
-* Simulamos el lanzamiento de 4 dados y nos preguntamos:
- - ¿Cuál es la probabilidad de que la suma sea menor que 14?
- - ¿Cuál es el valor esperado para la suma?
+-   Simulamos el lanzamiento de 4 dados y nos preguntamos:
+-   ¿Cuál es la probabilidad de que la suma sea menor que 14?
+-   ¿Cuál es el valor esperado para la suma?
 
 ```{r}
 set.seed(123)
@@ -15,23 +15,25 @@ suma.dados <- rowSums(matrix(sample(1:6,4000,replace=TRUE),nrow=1000))
 barplot(table(suma.dados),col=c(rep('red',10),rep('grey',11)))
 mean(suma.dados)
 sum(suma.dados<14)/1000
-```
-La esperanza matemática es $E(X)=13.896$ y la probabilidad $Pr(X<14)=0.465$.
 
+x <-- 1:10
+```
+
+La esperanza matemática es $E(X)=13.896$ y la probabilidad $Pr(X<14)=0.465$.
 
 La función `sample()` permite generar datos según una uniforme discreta... Nótese el argumento `replace`.
 
-* Simulamos el lanzamiento de 7 dados y nos preguntamos:
- - ¿Cuál es la probabilidad de que la suma esté entre 15 y 27 puntos?
- 
+-   Simulamos el lanzamiento de 7 dados y nos preguntamos:
+-   ¿Cuál es la probabilidad de que la suma esté entre 15 y 27 puntos?
+
 ```{r}
 set.seed(123)
 suma.dados <- rowSums(matrix(sample(1:6,700000,replace=TRUE),nrow=100000))
 barplot(table(suma.dados),col=c(rep('gray',7),rep('red',11),rep('grey',16)))
 sum(suma.dados >=15 & suma.dados<=27)/1000
 ```
- 
-* Supongamos que el nivel de inteligencia (CI) se puede describir razonablemente bien mediante un modelo de probabilidad normal con media 100 y desviación típica 15. ¿Cuál es la probabilidad de extraer al azar una persona con un CI entre 110 y 130 puntos?
+
+-   Supongamos que el nivel de inteligencia (CI) se puede describir razonablemente bien mediante un modelo de probabilidad normal con media 100 y desviación típica 15. ¿Cuál es la probabilidad de extraer al azar una persona con un CI entre 110 y 130 puntos?
 
 Podemos utilizar la función pnorm() para obtener $F(x)=Pr(X\leq x)$.
 
@@ -45,9 +47,9 @@ En este caso se utiliza la función `diff()` para obtener la diferencia entre la
 
 ## Descripción univariante: Categóricas
 
-* Distribución de frecuencias y otros índices:
+-   Distribución de frecuencias y otros índices:
 
-- Mediante la función ``table()``:
+-   Mediante la función `table()`:
 
 ```{r fig.height=10,fig.width=10}
 library(ggpubr)
@@ -80,7 +82,7 @@ p <-  (p1+p2)/p3
 p
 ```
 
-- Algunos índices a partir de la tabla de frecuencias: moda, odds e índice de Blau
+-   Algunos índices a partir de la tabla de frecuencias: moda, odds e índice de Blau
 
 ```{r}
 moda <- with(preocupaciones,preocupaciones[frecuencia==max(frecuencia)])
@@ -94,7 +96,7 @@ Blau
 
 ## Descripción univariante: Numéricas
 
-* Algunos indicadores de tendencia central, posición, forma y dispersión:
+-   Algunos indicadores de tendencia central, posición, forma y dispersión:
 
 ```{r}
 if(!require(e1071)){install.packages('e1071')
@@ -124,8 +126,7 @@ rownames(resultados) <- c('Mínimo','Media','Máximo','Desv. Típica','Asimetrí
 resultados
 ```
 
-* Gráficos para variables numéricas: histogramas superponiendo una curva normal.
-
+-   Gráficos para variables numéricas: histogramas superponiendo una curva normal.
 
 ```{r fig.height=14.5,fig.width=14.5}
 myhist <- function(x,varname){
@@ -141,12 +142,11 @@ par(mfrow=c(1,5))
 for(i in 1:5) myhist(x=bigfive[[i]],varname=names(bigfive)[i])
 ```
 
-
 ## Descripción bivariante: Categóricas
 
-* Tablas de contingencia:
+-   Tablas de contingencia:
 
-- Mediante la función ``table()``:
+-   Mediante la función `table()`:
 
 ```{r warning=FALSE,message=FALSE}
 Arthritis <- read.csv('Arthritis.csv',header=TRUE)
@@ -155,7 +155,7 @@ tabcont <- with(Arthritis,table(Treatment,Improved))
 tabcont
 ```
 
-* Índices $\chi^2$ de Pearson y V de Crámer:
+-   Índices $\chi^2$ de Pearson y V de Crámer:
 
 ```{r}
 pearsonChi <- chisq.test(tabcont)$statistic
@@ -166,7 +166,7 @@ cat(paste('Ji-cuadrado=',round(pearsonChi,2),
           'y V de Cramér=',round(cramerV,2)))
 ```
 
-* Gráficos:
+-   Gráficos:
 
 ```{r fig.height=10.5,fig.width=20.5}
 par(mfrow=c(1,2))
@@ -174,19 +174,18 @@ barplot(tabcont,beside=TRUE,legend.text=c('Placebo','Tratamiento'),
         args.legend=list(x="top"),col=heat.colors(2))
 ```
 
-
 ## Descripción bivariante: Numéricas
 
-* Índices de asociación:
+-   Índices de asociación:
 
-- Matriz de varianzas-covarianzas: indicador de asociación lineal no acotado...
+-   Matriz de varianzas-covarianzas: indicador de asociación lineal no acotado...
 
 ```{r}
 round(cov(bigfive, use ='pairwise.complete.obs'),2)
 # Argumento use nos permite seleccionar el tratamiento a los valores perdidos.
 ```
 
-- Matriz de correlaciones: argumento `method` permite especificar el tipo de correlación.
+-   Matriz de correlaciones: argumento `method` permite especificar el tipo de correlación.
 
 ```{r}
 # Correlación entre amabilidad y responsabilidad
@@ -200,9 +199,9 @@ cat(paste(c('Pearson = ','Spearman = ','Kendall = '),
 
 Recordad que las correlaciones toman valores entre -1 y 1.
 
-* Gráficos
+-   Gráficos
 
-- Diagramas de dispersión:
+-   Diagramas de dispersión:
 
 ```{r fig.height=6.5,fig.width=6.5}
 ggplot(bigfive,aes(Amabilidad,Apertura)) +
@@ -213,10 +212,9 @@ ggplot(bigfive,aes(Amabilidad,Apertura)) +
 
 # INFERENCIA ESTADÍSTICA CON R
 
-
 ## Estimación por intervalo
 
-* Una media poblacional: supongamos que queremos estimar la media de una población a partir de una muestra de 30 personas. En este caso, simulamos los datos pero piénsese en que en una situación normal estos datos se recogerían de una muestra. Se utilizará un nivel de confianza del $80\%$.
+-   Una media poblacional: supongamos que queremos estimar la media de una población a partir de una muestra de 30 personas. En este caso, simulamos los datos pero piénsese en que en una situación normal estos datos se recogerían de una muestra. Se utilizará un nivel de confianza del $80\%$.
 
 La función `t.test()` incorpora un intervalo de confianza para una muestra:
 
@@ -225,11 +223,10 @@ set.seed(123)
 x <- rnorm(30,mean=66,sd=4)     
 t.test(x,conf.level=0.8)
 ```
+
 Así, el intervalo de confianza para la media con un nivel de confianza del $95\%$ es $[64.87;66.75]$.
 
-
-* Diferencia de medias: utilizamos la base de datos normtemp para estimar la diferencia de medias poblacional entre hombres y mujeres en cuanto a la temperatura corporal. Nuevamente mediante la función `t.test()`:
-
+-   Diferencia de medias: utilizamos la base de datos normtemp para estimar la diferencia de medias poblacional entre hombres y mujeres en cuanto a la temperatura corporal. Nuevamente mediante la función `t.test()`:
 
 ```{r}
 if(!require(UsingR)){install.packages('UsingR')
@@ -243,9 +240,9 @@ t.test(temperature~gender.rec,var.equal=TRUE,data=normtemp)$conf.int
 
 La función devuelve una lista con varios elementos, entre ellos, el intervalo de confianza. Para acceder al elemento se utiliza el operador `$`. Nótese que en este ejemplo, el intervalo incluye únicamente valores negativos.
 
-* Proporción: se quiere estimar por intervalo la proporción de niños de 12 años que disponen de un teléfono móvil a partir de una muestra de 200 niños en los que se ha observado que el $45\%$ de ellos disponen de un smartphone.
+-   Proporción: se quiere estimar por intervalo la proporción de niños de 12 años que disponen de un teléfono móvil a partir de una muestra de 200 niños en los que se ha observado que el $45\%$ de ellos disponen de un smartphone.
 
- - Solución aproximada con distribución normal:
+-   Solución aproximada con distribución normal:
 
 ```{r}
 prop.muestra <- 0.45
@@ -253,27 +250,27 @@ n <- 200
 prop.test(n*prop.muestra,n)$conf.int
 ```
 
- - Solución exacta con distrubución binomial:
+-   Solución exacta con distrubución binomial:
 
 ```{r}
 binom.test(n*prop.muestra,n)
 ```
+
 Ambas estimaciones dan como resultado intervalos aproximados entre $0.38$ y $0.52$.
 
-* Estimación por intervalo de una razón de varianzas: la variabilidad en la temperatura corporal en hombres y mujeres.
+-   Estimación por intervalo de una razón de varianzas: la variabilidad en la temperatura corporal en hombres y mujeres.
 
 ```{r}
 var.test(temperature~gender.rec,data=normtemp)
 ```
-El intervalo de confianza para la razón de varianzas con un nivel de confianza $1-\alpha=0.95$ incluye el valor 1, por lo que podemos pensar que en la población de origen las dos varianzas son iguales.
 
+El intervalo de confianza para la razón de varianzas con un nivel de confianza $1-\alpha=0.95$ incluye el valor 1, por lo que podemos pensar que en la población de origen las dos varianzas son iguales.
 
 ## Pruebas paramétricas
 
-* Prueba t para grupos independientes: diferencias en frecuencia cardíaca entre hombres y mujeres. El contraste es de tipo bilateral:
+-   Prueba t para grupos independientes: diferencias en frecuencia cardíaca entre hombres y mujeres. El contraste es de tipo bilateral:
 
 $H_0: \mu_H-\mu_M=0$.
-
 
 ```{r}
 t.test(hr~gender,data=normtemp,var.equal=TRUE)
@@ -290,8 +287,7 @@ with(normtemp,cohens_d(hr~gender))
 
 El contraste por defecto es bilateral pero cambiando las opciones del argumento `alternative` se puede llevar a cabo un contraste unilateral.
 
-
-* Prueba t para medidas repetidas: ¿ha mejorado la memoria visual tras el entrenamiento?
+-   Prueba t para medidas repetidas: ¿ha mejorado la memoria visual tras el entrenamiento?
 
 En este caso se utilizará un contraste unilateral: $H_0: \mu_{Antes}-\mu_{Después}\geq 0$.
 
@@ -299,20 +295,20 @@ En este caso se utilizará un contraste unilateral: $H_0: \mu_{Antes}-\mu_{Despu
 visualMemory <- read.table('visualMemory.txt',header=TRUE)
 with(visualMemory,t.test(before,after,paired=TRUE,alternative='less'))
 ```
+
 En este caso el intervalo de confianza no es el correcto, volvemos a ejecutar un contraste bilateral y extraemos el intervalo de confianza:
 
 ```{r}
 with(visualMemory,t.test(before,after,paired=TRUE,alternative='two.sided')$conf.int)
 ```
 
- Tamaño del efecto:
- 
+Tamaño del efecto:
+
 ```{r}
 with(visualMemory,cohens_d(before,after,paired=TRUE))
 ```
- 
 
-* Análisis de la varianza: ¿hay diferencias entre las distintas condiciones en cuanto al crecimiento de las plantas? ¿hay alguna condición óptima?
+-   Análisis de la varianza: ¿hay diferencias entre las distintas condiciones en cuanto al crecimiento de las plantas? ¿hay alguna condición óptima?
 
 La hipótesis nula establece que no hay diferencias entre los grupos: $H_0:\mu_1=\mu_2=\mu_3$.
 
@@ -340,8 +336,7 @@ summary(glht(avar,linfct = mcp(group='Tukey')))
 plot(glht(avar,linfct = mcp(group='Tukey')))
 ```
 
-
-* Correlación de Pearson: ¿están la amabilidad y la extroversión de las personas asociadas linealmente en la población? ¿cuál es el tamaño de la asociación?
+-   Correlación de Pearson: ¿están la amabilidad y la extroversión de las personas asociadas linealmente en la población? ¿cuál es el tamaño de la asociación?
 
 La hipótesis nula establece la ausencia de relación: $H_0:\rho_{XY}=0$.
 
@@ -354,7 +349,7 @@ Existe una relación lineal positiva de intensidad elevada.
 
 ## Pruebas no paramétricas
 
-* Prueba Ji-Cuadradado: $H_0:\pi_{ij}=\pi_i\pi_j$
+-   Prueba Ji-Cuadradado: $H_0:\pi_{ij}=\pi_i\pi_j$
 
 ```{r}
 Arthritis <- read.csv('Arthritis.csv',header=TRUE)
@@ -365,8 +360,7 @@ chisq.test(tabcont)
 
 Recordad que la condición de aplicación es que todas las frecuencias esperadas sean $\geq 5$.
 
-
-* Pruebas de normalidad: $H_0:F(X)=\Phi(X)$.
+-   Pruebas de normalidad: $H_0:F(X)=\Phi(X)$.
 
 ```{r}
 shapiro.test(bigfive$Amabilidad)
@@ -374,8 +368,7 @@ shapiro.test(bigfive$Amabilidad)
 
 Existe una desviación significativa respecto al patrón normal.
 
-
-* Prueba para comparar 2 muestras independientes: prueba de suma de rangos o U de Mann-Whitney.
+-   Prueba para comparar 2 muestras independientes: prueba de suma de rangos o U de Mann-Whitney.
 
 $H_0:F_1(X)=F_2(X)$
 
@@ -383,7 +376,7 @@ $H_0:F_1(X)=F_2(X)$
 wilcox.test(hr~gender,data=normtemp,conf.int=TRUE)
 ```
 
-* Prueba de Levene para homogeneidad de varianzas: $H_0:\frac{\sigma_1^2}{\sigma_2^2}=1$
+-   Prueba de Levene para homogeneidad de varianzas: $H_0:\frac{\sigma_1^2}{\sigma_2^2}=1$
 
 ```{r}
 car::leveneTest(hr~factor(gender),data=normtemp)
@@ -391,22 +384,22 @@ car::leveneTest(hr~factor(gender),data=normtemp)
 
 Las varianzas son significativamente desiguales.
 
-* Prueba para comparar 2 medidas repetidas o muestras relacionadas: prueba de rangos con signo o T de Wilcoxon.
+-   Prueba para comparar 2 medidas repetidas o muestras relacionadas: prueba de rangos con signo o T de Wilcoxon.
 
 ```{r}
 with(visualMemory,wilcox.test(before,after,paired=TRUE,
      alternative='less',conf.int=TRUE))
 ```
 
-* Prueba no paramétrica para comparar  k muestras independientes: Prueba de Kruskal-Wallis
+-   Prueba no paramétrica para comparar k muestras independientes: Prueba de Kruskal-Wallis
 
 ```{r}
 kruskal.test(weight~group,data=PlantGrowth)
 ```
 
-* Prueba no paramétrica para comparar  k muestras relacionadas: Prueba $\chi^2$ de Friedman
+-   Prueba no paramétrica para comparar k muestras relacionadas: Prueba $\chi^2$ de Friedman
 
-- ¿Hay diferencias entre las condiciones de medición por la que pasan todos los bateadores?
+-   ¿Hay diferencias entre las condiciones de medición por la que pasan todos los bateadores?
 
 ```{r}
 RoundingTimes <-
@@ -440,7 +433,7 @@ head(RoundingTimes)
 friedman.test(RoundingTimes)
 ```
 
-* Pruebas no paramétricas basadas en correlaciones: Spearman y Kendall
+-   Pruebas no paramétricas basadas en correlaciones: Spearman y Kendall
 
 ```{r}
 with(bigfive,cor.test(Amabilidad,Extraversion,method='spearman'))
