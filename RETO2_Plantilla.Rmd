@@ -14,7 +14,6 @@ Analizad a nivel descriptivo (mediante representaciones tabulares y gráficas) y
 hola esta es una prueba
 
 #Hola grupo!
-#Ahhh funciona!!!!
 
 ```
 
