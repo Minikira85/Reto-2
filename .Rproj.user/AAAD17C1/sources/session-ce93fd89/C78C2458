@@ -1,0 +1,27 @@
+{
+    "id": "C78C2458",
+    "path": "/cloud/project/M03T03_Script.Rmd",
+    "project_path": "M03T03_Script.Rmd",
+    "type": "r_markdown",
+    "hash": "2065355370",
+    "contents": "",
+    "dirty": false,
+    "created": 1770411931325.0,
+    "source_on_save": false,
+    "relative_order": 2,
+    "properties": {
+        "chunk_output_type": "inline",
+        "source_window_id": "",
+        "Source": "Source",
+        "cursorPosition": "19,15",
+        "scrollLine": "0"
+    },
+    "folds": "",
+    "lastKnownWriteTime": 1770750833,
+    "encoding": "UTF-8",
+    "collab_server": "",
+    "source_window": "",
+    "last_content_update": 1770750833495,
+    "read_only": false,
+    "read_only_alternatives": []
+}
