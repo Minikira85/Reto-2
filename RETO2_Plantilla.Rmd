@@ -11,6 +11,7 @@ output: html_notebook
 Analizad a nivel descriptivo (mediante representaciones tabulares y gráficas) y comentad brevemente todas las variables incluidas en la base de datos excepto la variable de registro (*id*}). (1 punto)
 
 ```{r warning=FALSE,message=FALSE}
+<<<<<<< HEAD
 
 # ---- Análisis descriptivo (Carlos Dario) ----
 
@@ -32,6 +33,19 @@ datos <- archivos |>
 
 
 
+=======
+library(tidyverse)
+train <- read.csv("train.csv")
+test <- read.csv("test.csv")
+
+cat("dimensiones:", dim(train), "filas x", dim(train), "columnas\n")[1][2]
+cat("\nEstructuras de los datos:\n")
+str(train)
+#Excluimos variable de registro "id"
+vars_analisis <- names(train)[names(train) !="id"]
+
+#### Seguiré... se me pasó lo básico limpiar antes los datos
+>>>>>>> 54915746bcf4b94fc592568f0074d4583ef74d19
 ```
 
 ### EJERCICIO 2
