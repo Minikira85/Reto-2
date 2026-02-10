@@ -11,7 +11,27 @@ output: html_notebook
 Analizad a nivel descriptivo (mediante representaciones tabulares y gráficas) y comentad brevemente todas las variables incluidas en la base de datos excepto la variable de registro (*id*}). (1 punto)
 
 ```{r warning=FALSE,message=FALSE}
-hola esta es una prueba
+
+# ---- Análisis descriptivo (Carlos Dario) ----
+
+# ---- Carga y limpieza inicial de datos ----
+library(readr)
+library(dplyr)
+
+archivos <- list.files("DataSets", pattern = "\\.csv$", full.names = TRUE)
+
+datos <- archivos |>
+  lapply(read_csv, col_types = cols(.default = "c")) |>
+  bind_rows() |>
+  mutate(
+    age = as.numeric(age)
+  )
+
+
+
+
+
+
 ```
 
 ### EJERCICIO 2
