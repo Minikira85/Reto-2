@@ -15,6 +15,13 @@ library(tidyverse)
 train <- read.csv("train.csv")
 test <- read.csv("test.csv")
 
+cat("dimensiones:", dim(train), "filas x", dim(train), "columnas\n")[1][2]
+cat("\nEstructuras de los datos:\n")
+str(train)
+#Excluimos variable de registro "id"
+vars_analisis <- names(train)[names(train) !="id"]
+
+#### Seguiré... se me pasó lo básico limpiar antes los datos
 ```
 
 ### EJERCICIO 2
