@@ -12,6 +12,9 @@ Analizad a nivel descriptivo (mediante representaciones tabulares y gráficas) y
 
 ```{r warning=FALSE,message=FALSE}
 hola esta es una prueba
+
+#Hola grupo!
+
 ```
 
 ### EJERCICIO 2
