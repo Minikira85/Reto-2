@@ -11,10 +11,9 @@ output: html_notebook
 Analizad a nivel descriptivo (mediante representaciones tabulares y gráficas) y comentad brevemente todas las variables incluidas en la base de datos excepto la variable de registro (*id*}). (1 punto)
 
 ```{r warning=FALSE,message=FALSE}
-hola esta es una prueba
-
-Lo conseguiremos?
-  
+library(tidyverse)
+train <- read.csv("train.csv")
+test <- read.csv("test.csv")
 
 ```
 
