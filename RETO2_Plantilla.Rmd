@@ -11,47 +11,11 @@ output: html_notebook
 Analizad a nivel descriptivo (mediante representaciones tabulares y gráficas) y comentad brevemente todas las variables incluidas en la base de datos excepto la variable de registro (*id*}). (1 punto)
 
 ```{r warning=FALSE,message=FALSE}
+hola esta es una prueba
 
-<<<<<<< HEAD
 #Hola grupo!
 #Ahhh funciona!!!!
 ¿es este el script en el que trabajaremos?
-=======
-
-# ---- Análisis descriptivo (Carlos Dario) ----
-
-# ---- Carga y limpieza inicial de datos ----
-library(readr)
-library(dplyr)
-
-archivos <- list.files("DataSets", pattern = "\\.csv$", full.names = TRUE)
-
-datos <- archivos |>
-  lapply(read_csv, col_types = cols(.default = "c")) |>
-  bind_rows() |>
-  mutate(
-    age = as.numeric(age)
-  )
-
-
-
-
-
-
-=======
-library(tidyverse)
-train <- read.csv("train.csv")
-test <- read.csv("test.csv")
-
-cat("dimensiones:", dim(train), "filas x", dim(train), "columnas\n")[1][2]
-cat("\nEstructuras de los datos:\n")
-str(train)
-#Excluimos variable de registro "id"
-vars_analisis <- names(train)[names(train) !="id"]
-
-#### Seguiré... se me pasó lo básico limpiar antes los datos
->>>>>>> 54915746bcf4b94fc592568f0074d4583ef74d19
->>>>>>> 03031b284cbd04967b9c000dc370696686779437
 ```
 
 ### EJERCICIO 2
