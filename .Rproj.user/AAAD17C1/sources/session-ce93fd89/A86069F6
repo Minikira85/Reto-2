@@ -3,7 +3,7 @@
     "path": "/cloud/project/RETO2_Plantilla.Rmd",
     "project_path": "RETO2_Plantilla.Rmd",
     "type": "r_markdown",
-    "hash": "571322703",
+    "hash": "0",
     "contents": "",
     "dirty": false,
     "created": 1770411387089.0,
@@ -17,11 +17,11 @@
         "scrollLine": "6"
     },
     "folds": "",
-    "lastKnownWriteTime": 1770750865,
+    "lastKnownWriteTime": 1771149241,
     "encoding": "UTF-8",
     "collab_server": "",
     "source_window": "",
-    "last_content_update": 1770750865926,
+    "last_content_update": 1771149241296,
     "read_only": false,
     "read_only_alternatives": []
 }
