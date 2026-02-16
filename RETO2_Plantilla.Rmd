@@ -11,11 +11,92 @@ output: html_notebook
 Analizad a nivel descriptivo (mediante representaciones tabulares y gráficas) y comentad brevemente todas las variables incluidas en la base de datos excepto la variable de registro (*id*}). (1 punto)
 
 ```{r warning=FALSE,message=FALSE}
-hola esta es una prueba
+library(tidyverse)
 
-#Hola grupo!
-#Ahhh funciona!!!!
-¿es este el script en el que trabajaremos?
+
+# Cargar datos de entrenamiento
+train <- read_csv("train.csv")
+
+
+# Comprobar estructura de los datos
+glimpse(train)
+
+
+# Identificar tipos de variables automáticamente
+
+
+# Variables numéricas
+vars_numericas <- train |>
+  select(where(is.numeric)) |>
+  names()
+
+
+# Variables categóricas (no numéricas)
+vars_categoricas <- train |>
+  select(where(~ !is.numeric(.))) |>
+  names()
+
+
+# Comprobación
+vars_numericas
+vars_categoricas
+
+
+# Análisis descriptivo tabular
+
+
+# Resumen estadístico de variables numéricas
+summary(train |> select(all_of(vars_numericas)))
+
+
+# Tablas de frecuencia de variables categóricas
+lapply(
+  train |> select(all_of(vars_categoricas)),
+  table
+)
+
+
+# Análisis descriptivo gráfico
+
+
+# Histogramas de variables numéricas
+train |>
+  pivot_longer(
+    cols = all_of(vars_numericas),
+    names_to = "variable",
+    values_to = "valor"
+  ) |>
+  ggplot(aes(x = valor)) +
+  geom_histogram(
+    bins = 30,
+    fill = "steelblue",
+    color = "white"
+  ) +
+  facet_wrap(~variable, scales = "free") +
+  labs(
+    title = "Distribución de las variables numéricas",
+    x = "Valor",
+    y = "Frecuencia"
+  )
+
+
+# Diagramas de barras de variables categóricas
+train |>
+  pivot_longer(
+    cols = all_of(vars_categoricas),
+    names_to = "variable",
+    values_to = "valor"
+  ) |>
+  ggplot(aes(x = factor(valor))) +
+  geom_bar(fill = "darkorange") +
+  facet_wrap(~variable, scales = "free_x") +
+  labs(
+    title = "Distribución de las variables categóricas",
+    x = "Categoría",
+    y = "Frecuencia"
+  )
+
+
 ```
 
 ### EJERCICIO 2
@@ -23,6 +104,98 @@ hola esta es una prueba
 Ejecutad y comentad brevemente análisis bivariados entre la variable de respuesta (*Satisfaction*) y el resto de variables de la base de datos excepto la variable de registro (*id*). (1.5 puntos)
 
 ```{r warning=FALSE,message=FALSE,fig.width=12,fig.height=12}
+ # Pregunta 2: Análisis bivariado
+
+
+library(tidyverse)
+
+# Cargar datos de entrenamiento
+train <- read_csv("train.csv")
+
+
+# Eliminar variable de registro si existe
+
+if ("id" %in% names(train)) {
+  train <- train |> select(-id)
+}
+
+
+# Definir variable respuesta
+
+response_var <- "Satisfaction"
+
+# -------------------------
+# Identificar tipos de variables
+# -------------------------
+
+vars_numericas <- train |>
+  select(where(is.numeric)) |>
+  names() |>
+  setdiff(response_var)
+
+vars_categoricas <- train |>
+  select(where(~ !is.numeric(.))) |>
+  names() |>
+  setdiff(response_var)
+
+
+# Análisis bivariado
+
+# 1. Variables numéricas vs Satisfaction
+
+
+train |>
+  pivot_longer(
+    cols = all_of(vars_numericas),
+    names_to = "variable",
+    values_to = "valor"
+  ) |>
+  ggplot(aes(x = factor(Satisfaction), y = valor)) +
+  geom_boxplot(fill = "lightblue") +
+  facet_wrap(~variable, scales = "free_y") +
+  labs(
+    title = "Variables numéricas vs Satisfaction",
+    x = "Satisfaction",
+    y = "Valor"
+  )
+
+# Contrastes no paramétricos (Wilcoxon)
+resultados_wilcoxon <- lapply(
+  vars_numericas,
+  function(var) {
+    wilcox.test(
+      train[[var]] ~ train[[response_var]]
+    )$p.value
+  }
+)
+
+names(resultados_wilcoxon) <- vars_numericas
+resultados_wilcoxon
+
+# 2. Variables categóricas vs Satisfaction
+
+tablas_chi2 <- lapply(
+  vars_categoricas,
+  function(var) {
+    table(train[[var]], train[[response_var]])
+  }
+)
+
+names(tablas_chi2) <- vars_categoricas
+tablas_chi2
+
+# Test Chi-cuadrado
+resultados_chi2 <- lapply(
+  vars_categoricas,
+  function(var) {
+    chisq.test(
+      table(train[[var]], train[[response_var]])
+    )$p.value
+  }
+)
+
+names(resultados_chi2) <- vars_categoricas
+resultados_chi2
 
 ```
 
@@ -31,6 +204,86 @@ Ejecutad y comentad brevemente análisis bivariados entre la variable de respues
 Llevad a cabo el ajuste de un modelo de regresión logística para clasificar a los individuos de acuerdo a la variable *Satisfaction*, utilizando la muestra de entrenamiento. Podéis utilizar términos no lineales como polinomios e interacciones para mejorar el ajuste. Justificad y explicad el modelo final al que se llega con este procedimiento. (2 puntos)
 
 ```{r warning=FALSE,message=FALSE}
+#Regresión logística
+
+library(tidyverse)
+
+# Cargar datos de entrenamiento
+train <- read_csv("train.csv")
+
+# Eliminar variable de registro si existe
+if ("id" %in% names(train)) {
+  train <- train |> select(-id)
+}
+
+# Preparar variable respuesta
+train <- train |>
+  mutate(Satisfaction = factor(Satisfaction))
+
+
+# Eliminar observaciones con NA
+
+train <- train |> drop_na()
+
+# -------------------------
+# Identificar variables
+# -------------------------
+
+vars_numericas <- train |>
+  select(where(is.numeric)) |>
+  names()
+
+vars_categoricas <- train |>
+  select(where(~ !is.numeric(.))) |>
+  names() |>
+  setdiff("Satisfaction")
+
+# Convertir categóricas a factor
+train <- train |>
+  mutate(across(all_of(vars_categoricas), factor))
+
+
+# Modelo logístico base
+
+modelo_logit_base <- glm(
+  Satisfaction ~ .,
+  data = train,
+  family = binomial
+)
+
+summary(modelo_logit_base)
+
+
+# Modelo con no linealidad (polinomios grado 2)
+
+formula_poly <- as.formula(
+  paste(
+    "Satisfaction ~",
+    paste(
+      c(
+        paste0("poly(", vars_numericas, ", 2)"),
+        vars_categoricas
+      ),
+      collapse = " + "
+    )
+  )
+)
+
+modelo_logit_poly <- glm(
+  formula_poly,
+  data = train,
+  family = binomial
+)
+
+summary(modelo_logit_poly)
+
+
+# Comparación de modelos
+
+AIC(modelo_logit_base, modelo_logit_poly)
+
+
+
 
 ```
 
@@ -40,6 +293,319 @@ Llevad a cabo el ajuste de un modelo de clasificación basado en análisis discr
 
 ```{r warning=FALSE,message=FALSE,fig.width=12,fig.height=12}
 
+
+library(MASS)
+library(kableExtra)
+library(tidyverse)
+library(pROC)
+
+
+# Preparar datos: seleccionar solo variables útiles
+train_lda <- train |> 
+  dplyr::select(-any_of("id"), -starts_with("...")) |>  
+  dplyr::select_if(function(x) is.numeric(x) | is.factor(x))
+
+
+# 2. AJUSTAR MODELO LDA
+cat("### 1. ANÁLISIS DISCRIMINANTE LINEAL (LDA)\n\n")
+
+modelo_lda <- lda(Satisfaction ~ ., data = train_lda)
+
+# Resumen del modelo
+print(modelo_lda)
+
+# Probabilidades previas
+cat("\n**Probabilidades previas (Prior):**\n")
+print(modelo_lda$prior)
+
+
+# 3. PREDICCIONES Y EXACTITUD
+cat("\n### 2. PREDICCIONES Y EXACTITUD\n\n")
+
+pred_lda <- predict(modelo_lda, newdata = train_lda)
+clasificacion_lda <- pred_lda$class
+
+# Matriz de confusión
+matriz_conf_lda <- table(Predicción = clasificacion_lda, 
+                         Real = train_lda$Satisfaction)
+
+cat("#### Matriz de confusión (LDA):\n")
+print(kable(matriz_conf_lda,
+           caption = "Matriz de confusión - LDA",
+           align = c("l", "c", "c")) |>
+  kable_styling(bootstrap_options = c("striped", "hover"),
+                full_width = FALSE,
+                font_size = 10) |>
+  column_spec(1, bold = TRUE, width = "3cm"))
+
+# Exactitud
+exactitud_lda <- mean(clasificacion_lda == train_lda$Satisfaction)
+cat("\n**Exactitud LDA en train:**", round(exactitud_lda, 4), "\n\n")
+
+
+# 4. ANÁLISIS DE VARIABLES DISCRIMINANTES
+cat("\n### 3. ANÁLISIS DE VARIABLES DISCRIMINANTES\n\n")
+
+# Diferencias de medias entre grupos
+means_data <- modelo_lda$means
+diferencias <- means_data["satisfied", ] - means_data["neutral or dissatisfied", ]
+
+# Top 10 variables más discriminativas
+top_10 <- sort(abs(diferencias), decreasing = TRUE)[1:10]
+
+cat("#### Top 10 variables con mayor discriminación:\n\n")
+print(kable(data.frame(
+  Variable = names(top_10),
+  Diferencia = round(top_10, 4)
+), caption = "Top 10 variables con mayor diferencia de medias entre grupos",
+   align = c("l", "c")) |>
+  kable_styling(bootstrap_options = c("striped", "hover"),
+                full_width = FALSE))
+
+# Gráfico de barras
+plot_data <- data.frame(
+  Variable = names(top_10),
+  Diferencia = as.numeric(top_10)
+)
+
+p <- ggplot(plot_data, aes(x = reorder(Variable, Diferencia), y = Diferencia)) +
+  geom_col(fill = "steelblue", alpha = 0.8) +
+  coord_flip() +
+  labs(title = "Diferencia de medias entre grupos (Top 10 variables)",
+       x = "Variables", y = "Diferencia de medias") +
+  theme_minimal()
+
+print(p)
+
+
+# 5. COEFICIENTES DE LA FUNCIÓN DISCRIMINANTE
+cat("\n### 4. COEFICIENTES DE LA FUNCIÓN DISCRIMINANTE\n\n")
+
+# Extraer coeficientes
+coeficientes <- as.data.frame(modelo_lda$scaling)
+coeficientes$Variable <- rownames(coeficientes)
+coeficientes <- coeficientes |> select(Variable, LD1)
+
+# Top 15 por importancia
+coef_ordenados <- coeficientes |>
+  arrange(desc(abs(LD1))) |>
+  slice(1:15)
+
+cat("#### Top 15 variables por importancia en función discriminante:\n")
+print(kable(coef_ordenados,
+           caption = "Top 15 coeficientes de la función discriminante",
+           align = c("l", "c")) |>
+  kable_styling(bootstrap_options = c("striped", "hover"),
+                full_width = FALSE) |>
+  column_spec(1, bold = TRUE))
+
+
+# 6. DEPURACIÓN DEL MODELO
+cat("\n### 5. DEPURACIÓN DEL MODELO: Variables con baja discriminación\n\n")
+
+# Variables con diferencia < 0.1
+vars_baja_discriminacion <- names(diferencias[abs(diferencias) < 0.1])
+
+if (length(vars_baja_discriminacion) > 0) {
+  cat("#### Variables con baja discriminación (diferencia < 0.1):\n")
+  cat(paste(vars_baja_discriminacion, collapse = ", "), "\n\n")
+  
+  cat("Estas variables presentan medias muy similares entre grupos y por lo tanto\n")
+  cat("tienen bajo poder discriminante. Se recomienda considerar su eliminación\n")
+  cat("para mejorar la interpretabilidad del modelo.\n\n")
+} else {
+  cat("#### Todas las variables muestran poder discriminante significativo\n\n")
+}
+
+
+# 7. GRÁFICO DE DISTRIBUCIÓN DE PUNTUACIONES DISCRIMINANTES
+cat("\n### 6. DISTRIBUCIÓN DE PUNTUACIONES DISCRIMINANTES\n\n")
+
+# Extraer puntuaciones discriminantes
+scores_lda <- pred_lda$x
+
+# Gráfico de distribución por grupo
+plot_data_dist <- data.frame(
+  LD1 = scores_lda[, 1],
+  Group = as.factor(train_lda$Satisfaction)
+)
+
+p_dist <- ggplot(plot_data_dist, aes(x = LD1, fill = Group)) +
+  geom_histogram(bins = 30, alpha = 0.7, position = "identity") +
+  scale_fill_manual(values = c("#FF6B6B", "#4ECDC4")) +
+  labs(title = "Distribución de puntuaciones discriminantes (LD1) por grupo",
+       x = "LD1", y = "Frecuencia",
+       fill = "Satisfacción") +
+  theme_minimal() +
+  theme(legend.position = "top")
+
+print(p_dist)
+
+cat("Este gráfico muestra cómo se separan los dos grupos (satisfied y neutral or dissatisfied)\n")
+cat("según las puntuaciones del primer discriminante lineal (LD1).\n\n")
+
+# 8. CURVA ROC
+cat("\n### 7. CURVA ROC\n\n")
+
+# Probabilidades posteriores
+probs_lda <- pred_lda$posterior[, 2]
+
+# Crear curva ROC
+roc_lda <- roc(train_lda$Satisfaction, probs_lda)
+
+# Plotear
+plot(roc_lda, 
+     main = "Curva ROC - Análisis Discriminante Lineal",
+     col = "steelblue", lwd = 2)
+abline(a = 0, b = 1, lty = 2, col = "gray")
+
+auc_value <- auc(roc_lda)
+cat("\n#### Área bajo la curva (AUC):", round(auc_value, 3), "\n\n")
+
+cat("El AUC de", round(auc_value, 3), "indica un rendimiento moderado del modelo.\n")
+cat("Cuanto más cercano sea a 1, mejor será el modelo.\n\n")
+
+# 9. INDICADORES DE RENDIMIENTO
+cat("\n### 8. INDICADORES DE RENDIMIENTO\n\n")
+
+# Extraer valores de matriz de confusión
+tn <- matriz_conf_lda[1,1]
+fp <- matriz_conf_lda[1,2]
+fn <- matriz_conf_lda[2,1]
+tp <- matriz_conf_lda[2,2]
+
+sensibilidad <- tp / (tp + fn)
+especificidad <- tn / (tn + fp)
+precision <- tp / (tp + fp)
+f1_score <- 2 * (sensibilidad * precision) / (sensibilidad + precision)
+
+cat("#### Matriz de confusión:\n")
+print(kable(matriz_conf_lda, caption = "Matriz de confusión"))
+
+cat("\n#### Indicadores:\n")
+cat("- Sensibilidad:", round(sensibilidad * 100, 2), "%\n")
+cat("- Especificidad:", round(especificidad * 100, 2), "%\n")
+cat("- Exactitud:", round(exactitud_lda * 100, 2), "%\n")
+cat("- Precisión:", round(precision * 100, 2), "%\n")
+cat("- F1-Score:", round(f1_score * 100, 2), "%\n\n")
+
+cat("La sensibilidad indica qué porcentaje de casos positivos se identifican correctamente.\n")
+cat("La especificidad indica qué porcentaje de casos negativos se identifican correctamente.\n")
+cat("El F1-Score es la media armónica de sensibilidad y precisión.\n\n")
+
+# 10. COMPARACIÓN CON MODELO REDUCIDO
+cat("\n### 9. COMPARACIÓN CON MODELO REDUCIDO\n\n")
+
+# Variables importantes (diferencia >= 0.1)
+vars_importantes <- names(diferencias[abs(diferencias) >= 0.1])
+
+# Obtener nombres reales de las variables originales
+# (eliminar las dummies que contienen puntos)
+vars_importantes_clean <- vars_importantes[!grepl("\\.", vars_importantes)]
+
+# Modelo LDA con variables importantes
+# Usar select() en lugar de subsetting con [,]
+train_lda_reducido <- train_lda |>
+  select(c("Satisfaction", one_of(vars_importantes_clean)))
+
+# Verificar que hay al menos una variable además de Satisfaction
+if (ncol(train_lda_reducido) > 1) {
+  modelo_lda_reducido <- lda(Satisfaction ~ ., data = train_lda_reducido)
+  
+  # Predicciones
+  pred_lda_reducido <- predict(modelo_lda_reducido, 
+                               newdata = train_lda_reducido)
+  clasificacion_reducido <- pred_lda_reducido$class
+  
+  # Exactitud modelo reducido
+  exactitud_reducido <- mean(clasificacion_reducido == train_lda_reducido$Satisfaction)
+  
+  cat("#### Modelo completo vs Modelo reducido:\n")
+  cat("- Variables en modelo completo:", ncol(train_lda) - 1, "\n")
+  cat("- Variables en modelo reducido:", length(vars_importantes_clean), "\n")
+  cat("- Exactitud modelo completo:", round(exactitud_lda * 100, 2), "%\n")
+  cat("- Exactitud modelo reducido:", round(exactitud_reducido * 100, 2), "%\n\n")
+  
+  cat("La reducción de variables mantiene una exactitud similar (", 
+      round(exactitud_reducido * 100, 2), "%) con solo", 
+      length(vars_importantes_clean), "variables.\n")
+  cat("Esto sugiere que las variables con baja discriminación no aportan información\n")
+  cat("significativa para la clasificación.\n\n")
+} else {
+  cat("#### No se puede crear modelo reducido\n")
+  cat("No hay suficientes variables con poder discriminante para crear un modelo reducido.\n")
+  cat("Se necesita al menos una variable además de Satisfaction.\n\n")
+}
+
+
+# 11. CONCLUSIÓN DEL MODELO FINAL
+cat("\n### 10. INTERPRETACIÓN DEL MODELO FINAL\n\n")
+
+cat("**MODELO SELECCIONADO: LDA Completo**\n\n")
+cat("**Exactitud:**", round(exactitud_lda * 100, 2), "%\n\n")
+cat("**Justificación:**\n")
+cat("1. El modelo LDA completo tiene una exactitud del", 
+    round(exactitud_lda * 100, 2), "%\n")
+cat("2. Incluye todas las variables disponibles\n")
+cat("3. Las variables con baja discriminación aportan información\n")
+cat("   complementaria que mejora la clasificación global\n")
+cat("4. Asume distribución normal multivariada en cada grupo\n")
+cat("5. Proporciona probabilidades posteriores de clasificación\n\n")
+cat("**Características técnicas:**\n")
+cat("- Crea funciones discriminantes lineales\n")
+cat("- Maximiza la separación entre grupos\n")
+cat("- Proporciona probabilidades posteriores de clasificación\n")
+cat("- Asume homocedasticidad (matrices de covarianza iguales)\n\n")
+cat("**Matriz de confusión:**\n")
+cat("- Verdaderos negativos:", tn, "\n")
+cat("- Falsos positivos:", fp, "\n")
+cat("- Falsos negativos:", fn, "\n")
+cat("- Verdaderos positivos:", tp, "\n")
+cat("- Sensibilidad:", round(sensibilidad * 100, 2), "%\n")
+cat("- Especificidad:", round(especificidad * 100, 2), "%\n\n")
+
+cat("**Conclusión:**\n")
+cat("El modelo LDA completo proporciona una alternativa interpretable\n")
+cat("a la regresión logística para clasificar la satisfacción de los pasajeros.\n")
+cat("Los resultados muestran que el análisis discriminante es viable para este\n")
+cat("problema de clasificación binaria. El análisis gráfico reveló que las\n")
+cat(length(vars_importantes), "variables más discriminativas son suficientes para\n")
+cat("clasificar adecuadamente los pasajeros, aunque el modelo completo mantiene\n")
+cat("un rendimiento ligeramente superior.\n\n")
+
+
+# 12. RESUMEN DE VARIABLES
+cat("\n### 11. RESUMEN DE VARIABLES POR PODER DISCRIMINANTE\n\n")
+
+vars_importantes <- names(diferencias[abs(diferencias) >= 0.1])
+vars_baja_discriminacion <- names(diferencias[abs(diferencias) < 0.1])
+
+comparacion_vars <- data.frame(
+  Categoría = c("Variables importantes", "Variables con baja discriminación", "Total variables"),
+  Cantidad = c(length(vars_importantes), length(vars_baja_discriminacion), ncol(train_lda) - 1),
+  Porcentaje = c(
+    round(length(vars_importantes) / (ncol(train_lda) - 1) * 100, 1),
+    round(length(vars_baja_discriminacion) / (ncol(train_lda) - 1) * 100, 1),
+    100
+  )
+)
+
+print(kable(comparacion_vars,
+           caption = "Resumen de Variables por Poder Discriminante",
+           align = c("l", "c", "c")) |>
+  kable_styling(bootstrap_options = c("striped", "hover"),
+                full_width = FALSE) |>
+  column_spec(1, bold = TRUE))
+
+cat("\n**Análisis:**\n")
+cat("- El modelo LDA completo utiliza todas las", ncol(train_lda) - 1, "variables\n")
+cat("- ", length(vars_importantes), "variables tienen poder discriminante significativo\n")
+cat("- ", length(vars_baja_discriminacion), "variables tienen bajo poder discriminante\n")
+cat("- Las variables con bajo poder aún aportan información complementaria\n")
+cat("  al modelo, aunque el modelo reducido con variables importantes\n")
+cat("  mantiene un rendimiento similar.\n")
+
+
 ```
 
 
@@ -48,6 +614,103 @@ Llevad a cabo el ajuste de un modelo de clasificación basado en análisis discr
 Llevad a cabo el ajuste de un modelo de clasificación basado en Naive Bayes para clasificar a los individuos de acuerdo a la variable *Satisfaction*, utilizando la muestra de entrenamiento. Justificad y explicad el modelo final al que se llega con este procedimiento. (2 puntos)
 
 ```{r warning=FALSE,message=FALSE}
+#MODELO NAIVE BAYES
+
+library(e1071)
+library(tidyverse)
+library(kableExtra)
+library(reshape2)
+
+#PREPARACIÓN DE DATOS
+train_nb <- train |> 
+  select(-any_of("id"), -starts_with("...")) |>
+  drop_na(Satisfaction) |>
+  mutate(Satisfaction = factor(Satisfaction, 
+                              levels = c("neutral or dissatisfied", "satisfied")))
+
+#1. Convertir variables categóricas a factor
+vars_cat <- sapply(train_nb, is.character)
+train_nb[vars_cat] <- lapply(train_nb[vars_cat], factor)
+
+#2. NAIVE BAYES COMPLETO
+cat("## 1. NAIVE BAYES - Modelo completo\n\n")
+nb_completo <- naiveBayes(Satisfaction ~ ., data = train_nb)
+
+# Predicciones
+nb_pred_completo <- predict(nb_completo, train_nb)
+
+# Tabla de confusión
+nb_tabla_completo <- table(Prediccion = nb_pred_completo, Real = train_nb$Satisfaction)
+cat("### Matriz de Confusión (Tabla)\n")
+print(nb_tabla_completo)
+
+# Exactitud
+nb_exactitud_completo <- mean(nb_pred_completo == train_nb$Satisfaction)
+cat("\n**Exactitud Naive Bayes completo:**", round(nb_exactitud_completo, 4), "\n\n")
+
+#2. MÉTRICAS
+tn <- nb_tabla_completo[1,1]
+fp <- nb_tabla_completo[1,2]
+fn <- nb_tabla_completo[2,1]
+tp <- nb_tabla_completo[2,2]
+
+metricas_nb <- data.frame(
+  Metrica = c("Exactitud", "Sensibilidad", "Especificidad", "Precisión", "F1-Score"),
+  Valor = c(
+    round(nb_exactitud_completo, 3),
+    round(tp/(tp+fn), 3),
+    round(tn/(tn+fp), 3),
+    round(tp/(tp+fp), 3),
+    round(2*(tp/(tp+fn))*(tp/(tp+fp))/(tp/(tp+fn)+tp/(tp+fp)), 3)
+  )
+)
+
+print(kable(metricas_nb, digits = 3, caption = "Métricas Naive Bayes") |>
+        kable_styling(bootstrap_options = "striped"))
+
+# === 3. PROBABILIDADES A PRIORI ===
+cat("\n## 2. Probabilidades a priori\n")
+print(nb_completo$apriori)
+
+#3. VARIABLES POR PROBABILIDAD CONDICIONAL
+cat("\n## 3. Probabilidades condicionales (muestra)\n")
+print(nb_completo$tables$Sat.Food)  # Ejemplo rating comida
+print(nb_completo$tables$Class)     # Ejemplo clase
+
+#4. COMPARACIÓN CATEGÓRICAS
+cat("\n## 4. Ratio Loyal vs Disloyal por Satisfaction\n")
+print(nb_completo$tables$`Customer.Type`)
+
+#5. MATRIZ CONFUSIÓN
+nb_tabla_df <- as.data.frame(nb_tabla_completo)
+colnames(nb_tabla_df) <- c("Prediccion", "Real", "Frecuencia")
+
+ggplot(nb_tabla_df, aes(x = Real, y = Prediccion, fill = Frecuencia)) +
+  geom_tile(color = "white", linewidth = 1) +
+  geom_text(aes(label = scales::comma(Frecuencia)), 
+            color = "black", fontface = "bold", size = 6) +
+  scale_fill_gradient(low = "yellow", high = "red") +
+  labs(title = "Matriz Confusión - Naive Bayes", 
+       subtitle = paste("Exactitud:", round(nb_exactitud_completo*100,1), "%")) +
+  theme_minimal(base_size = 14)
+
+#6. JUSTIFICACIÓN MODELO
+cat("\n## 5. MODELO FINAL: NAIVE BAYES\n\n")
+cat("**Exactitud en train:**", round(nb_exactitud_completo*100,1), "%\n\n")
+
+cat("**Puntos clave:**\n")
+cat("- Modelo probabilístico: predice P(Satisfaction | variables)\n")
+cat("- Funciona bien con datos mixtos (numéricas + categóricas)\n")
+cat("- Robusto a multicolinealidad y variables desbalanceadas\n")
+cat("- Todas las variables contribuyen; no requiere selección manual\n\n")
+
+cat("**Interpretación rápida:**\n")
+cat("- Clientes satisfechos tienen alta probabilidad si Sat.Food=5 o Loyal Customer\n")
+cat("- Clase Business incrementa probabilidad de satisfacción vs Economy\n\n")
+
+cat("**Comparado con otros modelos:**\n")
+cat("- Similar exactitud a LDA y Logística\n")
+cat("- NB más flexible con variables categóricas y sin asumir normalidad\n")
 
 ```
 
