@@ -648,7 +648,7 @@ print(nb_tabla_completo)
 nb_exactitud_completo <- mean(nb_pred_completo == train_nb$Satisfaction)
 cat("\n**Exactitud Naive Bayes completo:**", round(nb_exactitud_completo, 4), "\n\n")
 
-#2. MÉTRICAS
+#3. MÉTRICAS
 tn <- nb_tabla_completo[1,1]
 fp <- nb_tabla_completo[1,2]
 fn <- nb_tabla_completo[2,1]
@@ -672,16 +672,16 @@ print(kable(metricas_nb, digits = 3, caption = "Métricas Naive Bayes") |>
 cat("\n## 2. Probabilidades a priori\n")
 print(nb_completo$apriori)
 
-#3. VARIABLES POR PROBABILIDAD CONDICIONAL
+#4. VARIABLES POR PROBABILIDAD CONDICIONAL
 cat("\n## 3. Probabilidades condicionales (muestra)\n")
 print(nb_completo$tables$Sat.Food)  # Ejemplo rating comida
 print(nb_completo$tables$Class)     # Ejemplo clase
 
-#4. COMPARACIÓN CATEGÓRICAS
+#5. COMPARACIÓN CATEGÓRICAS
 cat("\n## 4. Ratio Loyal vs Disloyal por Satisfaction\n")
 print(nb_completo$tables$`Customer.Type`)
 
-#5. MATRIZ CONFUSIÓN
+#6. MATRIZ CONFUSIÓN
 nb_tabla_df <- as.data.frame(nb_tabla_completo)
 colnames(nb_tabla_df) <- c("Prediccion", "Real", "Frecuencia")
 
@@ -694,7 +694,7 @@ ggplot(nb_tabla_df, aes(x = Real, y = Prediccion, fill = Frecuencia)) +
        subtitle = paste("Exactitud:", round(nb_exactitud_completo*100,1), "%")) +
   theme_minimal(base_size = 14)
 
-#6. JUSTIFICACIÓN MODELO
+#7. JUSTIFICACIÓN MODELO
 cat("\n## 5. MODELO FINAL: NAIVE BAYES\n\n")
 cat("**Exactitud en train:**", round(nb_exactitud_completo*100,1), "%\n\n")
 
@@ -711,7 +711,6 @@ cat("- Clase Business incrementa probabilidad de satisfacción vs Economy\n\n")
 cat("**Comparado con otros modelos:**\n")
 cat("- Similar exactitud a LDA y Logística\n")
 cat("- NB más flexible con variables categóricas y sin asumir normalidad\n")
-
 ```
 
 ### EJERCICIO 6
