@@ -668,7 +668,7 @@ metricas_nb <- data.frame(
 print(kable(metricas_nb, digits = 3, caption = "Métricas Naive Bayes") |>
         kable_styling(bootstrap_options = "striped"))
 
-# === 3. PROBABILIDADES A PRIORI ===
+#PROBABILIDADES A PRIORI
 cat("\n## 2. Probabilidades a priori\n")
 print(nb_completo$apriori)
 
