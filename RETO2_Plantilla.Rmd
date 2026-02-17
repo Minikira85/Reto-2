@@ -750,25 +750,129 @@ Comparad y discutid los anteriores modelos a los que habéis llegado a propósit
 
 
 ```{r warning=FALSE,message=FALSE,fig.width=12,fig.height=12}
-# COMPARACIÓN DE MODELOS
+# COMPARACIÓN DE MODELOS (VERSIÓN TEST)
 
-library(tidyverse)
-library(kableExtra)
 
-#1. Métricas Regresión Logística (Ej3)
+library(tidyverse)   # manipulación
+library(MASS)        # lda
+library(e1071)       # naiveBayes
+library(kableExtra)  # tablas bonitas
 
-prob_logit <- predict(modelo_step, type = "response")
-pred_logit <- ifelse(prob_logit > 0.5, "satisfied", "neutral or dissatisfied")
-pred_logit <- factor(pred_logit, levels = levels(train$Satisfaction))
+# 0. CARGAR DATOS
+train <- read_csv("train.csv") %>%
+  drop_na(Satisfaction) %>%
+  mutate(Satisfaction = factor(Satisfaction, 
+                               levels = c("neutral or dissatisfied", "satisfied")))
 
-tabla_logit <- table(Pred = pred_logit, Real = train$Satisfaction)
+test <- read_csv("test.csv") %>%
+  drop_na(Satisfaction) %>%
+  mutate(Satisfaction = factor(Satisfaction, 
+                               levels = c("neutral or dissatisfied", "satisfied")))
 
+#1. CONVERTIR VARIABLES CATEGÓRICAS A FACTOR
+vars_cat <- sapply(train, is.character)
+train[vars_cat] <- lapply(train[vars_cat], factor)
+test[vars_cat]  <- lapply(test[vars_cat], factor) 
+
+
+#2. MODELO LOGÍSTICO
+
+modelo_step <- step(glm(Satisfaction ~ ., data = train, family = "binomial"), 
+                    direction = "both", trace = FALSE)
+
+test_completo <- test[complete.cases(test[, names(modelo_step$model)]), ]
+prob_logit <- predict(modelo_step, newdata = test_completo, type = "response")
+pred_logit <- factor(ifelse(prob_logit > 0.5, "satisfied", "neutral or dissatisfied"),
+                     levels = levels(test_completo$Satisfaction))
+
+tabla_logit <- table(Pred = pred_logit, Real = test_completo$Satisfaction)
 tn_log <- tabla_logit[1,1]; fp_log <- tabla_logit[1,2]
 fn_log <- tabla_logit[2,1]; tp_log <- tabla_logit[2,2]
 
-exact_log <- mean(pred_logit == train$Satisfaction)
+exact_log <- mean(pred_logit == test_completo$Satisfaction)
 sens_log  <- tp_log/(tp_log+fn_log)
 esp_log   <- tn_log/(tn_log+fp_log)
 prec_log  <- tp_log/(tp_log+fp_log)
 f1_log    <- 2*(sens_log*prec_log)/(sens_log+prec_log)
+
+#3. MODELO LDA
+
+modelo_lda <- lda(Satisfaction ~ ., data = train)
+test_lda <- test[complete.cases(test), ]
+test_lda <- droplevels(test_lda)
+
+pred_lda <- predict(modelo_lda, newdata = test_lda)$class
+
+tabla_lda <- table(Pred = pred_lda, Real = test_lda$Satisfaction) 
+tn_lda <- tabla_lda[1,1]; fp_lda <- tabla_lda[1,2]
+fn_lda <- tabla_lda[2,1]; tp_lda <- tabla_lda[2,2]
+
+exact_lda <- mean(pred_lda == test_lda$Satisfaction)
+sens_lda  <- tp_lda/(tp_lda+fn_lda)
+esp_lda   <- tn_lda/(tn_lda+fp_lda)
+prec_lda  <- tp_lda/(tp_lda+fp_lda)
+f1_lda    <- 2*(sens_lda*prec_lda)/(sens_lda+prec_lda)
+
+#4. NAIVE BAYES
+
+train_nb <- train
+test_nb  <- test
+
+# Asegurar que todas las categóricas son factor
+vars_cat_nb <- sapply(train_nb, is.character)
+train_nb[vars_cat_nb] <- lapply(train_nb[vars_cat_nb], factor)
+test_nb[vars_cat_nb]  <- lapply(test_nb[vars_cat_nb], factor)
+
+nb_completo <- naiveBayes(Satisfaction ~ ., data = train_nb)
+nb_pred_test <- predict(nb_completo, newdata = test_nb)
+
+tabla_nb <- table(Pred = nb_pred_test, Real = test_nb$Satisfaction)
+tn_nb <- tabla_nb[1,1]; fp_nb <- tabla_nb[1,2]
+fn_nb <- tabla_nb[2,1]; tp_nb <- tabla_nb[2,2]
+
+exact_nb <- mean(nb_pred_test == test_nb$Satisfaction)
+sens_nb  <- tp_nb/(tp_nb+fn_nb)
+esp_nb   <- tn_nb/(tn_nb+fp_nb)
+prec_nb  <- tp_nb/(tp_nb+fp_nb)
+f1_nb    <- 2*(sens_nb*prec_nb)/(sens_nb+prec_nb)
+
+#5. TABLA COMPARATIVA FINAL
+
+comparacion_modelos <- data.frame(
+  Modelo = c("**Logística**", "**LDA**", "**Naive Bayes**"),
+  Exactitud = c(exact_log, exact_lda, exact_nb),
+  Sensibilidad = c(sens_log, sens_lda, sens_nb),
+  Especificidad = c(esp_log, esp_lda, esp_nb),
+  Precision = c(prec_log, prec_lda, prec_nb),
+  `F1-Score` = c(f1_log, f1_lda, f1_nb)
+)
+cat("\n===== RESULTADOS EN TEST =====\n\n")
+cat("Logística:\n")
+cat("Exactitud:", round(exact_log,3), 
+    "Sens:", round(sens_log,3), 
+    "Esp:", round(esp_log,3), 
+    "Prec:", round(prec_log,3), 
+    "F1:", round(f1_log,3), "\n\n")
+
+cat("LDA:\n")
+cat("Exactitud:", round(exact_lda,3), 
+    "Sens:", round(sens_lda,3), 
+    "Esp:", round(esp_lda,3), 
+    "Prec:", round(prec_lda,3), 
+    "F1:", round(f1_lda,3), "\n\n")
+
+cat("Naive Bayes:\n")
+cat("Exactitud:", round(exact_nb,3), 
+    "Sens:", round(sens_nb,3), 
+    "Esp:", round(esp_nb,3), 
+    "Prec:", round(prec_nb,3), 
+    "F1:", round(f1_nb,3), "\n\n")
+
+kable(comparacion_modelos, digits=3, 
+      caption = "**EJ6: COMPARACIÓN FINAL - 3 MODELOS (Test)**") %>%
+  kable_styling(bootstrap_options = c("striped","hover","condensed"),
+                full_width = FALSE) %>%
+  row_spec(0, bold=TRUE, background="steelblue", color="white") %>%
+  row_spec(which.max(comparacion_modelos$Exactitud),
+           bold=TRUE, background="#D4EDDA")
 ```
