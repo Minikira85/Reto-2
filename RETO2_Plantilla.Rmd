@@ -435,7 +435,7 @@ cat("\n### 4. COEFICIENTES DE LA FUNCIÓN DISCRIMINANTE\n\n")
 # Extraer coeficientes
 coeficientes <- as.data.frame(modelo_lda$scaling)
 coeficientes$Variable <- rownames(coeficientes)
-coeficientes <- coeficientes |> select(Variable, LD1)
+coeficientes <- coeficientes |> dplyr::select(Variable, LD1)
 
 # Top 15 por importancia
 coef_ordenados <- coeficientes |>
@@ -550,44 +550,24 @@ cat("\n### 9. COMPARACIÓN CON MODELO REDUCIDO\n\n")
 # Variables importantes (diferencia >= 0.1)
 vars_importantes <- names(diferencias[abs(diferencias) >= 0.1])
 
-# Obtener nombres reales de las variables originales
-# (eliminar las dummies que contienen puntos)
-vars_importantes_clean <- vars_importantes[!grepl("\\.", vars_importantes)]
-
 # Modelo LDA con variables importantes
-# Usar select() en lugar de subsetting con [,]
-train_lda_reducido <- train_lda |>
-  select(c("Satisfaction", one_of(vars_importantes_clean)))
+train_lda_reducido <- train_lda |> 
+  dplyr::select(Satisfaction, any_of(vars_importantes))
 
 # Verificar que hay al menos una variable además de Satisfaction
 if (ncol(train_lda_reducido) > 1) {
   modelo_lda_reducido <- lda(Satisfaction ~ ., data = train_lda_reducido)
   
-  # Predicciones
-  pred_lda_reducido <- predict(modelo_lda_reducido, 
-                               newdata = train_lda_reducido)
+  pred_lda_reducido <- predict(modelo_lda_reducido, newdata = train_lda_reducido)
   clasificacion_reducido <- pred_lda_reducido$class
-  
-  # Exactitud modelo reducido
   exactitud_reducido <- mean(clasificacion_reducido == train_lda_reducido$Satisfaction)
   
   cat("#### Modelo completo vs Modelo reducido:\n")
   cat("- Variables en modelo completo:", ncol(train_lda) - 1, "\n")
-  cat("- Variables en modelo reducido:", length(vars_importantes_clean), "\n")
+  cat("- Variables en modelo reducido:", ncol(train_lda_reducido) - 1, "\n")  # ← CAMBIO AQUÍ
   cat("- Exactitud modelo completo:", round(exactitud_lda * 100, 2), "%\n")
   cat("- Exactitud modelo reducido:", round(exactitud_reducido * 100, 2), "%\n\n")
-  
-  cat("La reducción de variables mantiene una exactitud similar (", 
-      round(exactitud_reducido * 100, 2), "%) con solo", 
-      length(vars_importantes_clean), "variables.\n")
-  cat("Esto sugiere que las variables con baja discriminación no aportan información\n")
-  cat("significativa para la clasificación.\n\n")
-} else {
-  cat("#### No se puede crear modelo reducido\n")
-  cat("No hay suficientes variables con poder discriminante para crear un modelo reducido.\n")
-  cat("Se necesita al menos una variable además de Satisfaction.\n\n")
 }
-
 
 # 11. CONCLUSIÓN DEL MODELO FINAL
 cat("\n### 10. INTERPRETACIÓN DEL MODELO FINAL\n\n")
@@ -629,7 +609,9 @@ cat("un rendimiento ligeramente superior.\n\n")
 cat("\n### 11. RESUMEN DE VARIABLES POR PODER DISCRIMINANTE\n\n")
 
 vars_importantes <- names(diferencias[abs(diferencias) >= 0.1])
-vars_baja_discriminacion <- names(diferencias[abs(diferencias) < 0.1])
+coeficientes_bajos <- as.data.frame(modelo_lda$scaling)
+coeficientes_bajos$Variable <- rownames(coeficientes_bajos)
+vars_baja_discriminacion <- coeficientes_bajos$Variable[abs(coeficientes_bajos$LD1) < 0.1]
 
 comparacion_vars <- data.frame(
   Categoría = c("Variables importantes", "Variables con baja discriminación", "Total variables"),
@@ -655,8 +637,6 @@ cat("- ", length(vars_baja_discriminacion), "variables tienen bajo poder discrim
 cat("- Las variables con bajo poder aún aportan información complementaria\n")
 cat("  al modelo, aunque el modelo reducido con variables importantes\n")
 cat("  mantiene un rendimiento similar.\n")
-
-
 ```
 
 
@@ -770,5 +750,25 @@ Comparad y discutid los anteriores modelos a los que habéis llegado a propósit
 
 
 ```{r warning=FALSE,message=FALSE,fig.width=12,fig.height=12}
+# COMPARACIÓN DE MODELOS
 
+library(tidyverse)
+library(kableExtra)
+
+#1. Métricas Regresión Logística (Ej3)
+
+prob_logit <- predict(modelo_step, type = "response")
+pred_logit <- ifelse(prob_logit > 0.5, "satisfied", "neutral or dissatisfied")
+pred_logit <- factor(pred_logit, levels = levels(train$Satisfaction))
+
+tabla_logit <- table(Pred = pred_logit, Real = train$Satisfaction)
+
+tn_log <- tabla_logit[1,1]; fp_log <- tabla_logit[1,2]
+fn_log <- tabla_logit[2,1]; tp_log <- tabla_logit[2,2]
+
+exact_log <- mean(pred_logit == train$Satisfaction)
+sens_log  <- tp_log/(tp_log+fn_log)
+esp_log   <- tn_log/(tn_log+fp_log)
+prec_log  <- tp_log/(tp_log+fp_log)
+f1_log    <- 2*(sens_log*prec_log)/(sens_log+prec_log)
 ```
