@@ -1,6 +1,6 @@
 ---
 title: "Modelos Estadísticos: RETO 2"
-author: IDENTIFICADOR GRUPO
+author: IDENTIFICADOR GRUPO 1
 output: html_notebook
 ---
 
@@ -40,6 +40,14 @@ vars_categoricas <- train |>
 # Comprobación
 vars_numericas
 vars_categoricas
+
+# Revisar NaS
+na_summary <- train |>
+  summarise_all(~ sum(is.na(.))) |>
+  pivot_longer(everything(), names_to = "var", values_to = "nas") |>
+  mutate(pct = nas / nrow(train) * 100) |>
+  filter(nas > 0)  # Solo con NAs
+print(na_summary)
 
 
 # Análisis descriptivo tabular
@@ -98,6 +106,14 @@ train |>
 
 
 ```
+#### Análisis descriptivo ejercicio 1:
+La muestra incluyó 103.904 observaciones de pasajeros de vuelos comerciales, con datos completos salvo en retraso de llegada (0.3% faltantes). La variable Satisfaction presentó desbalance moderado (56.7% neutral o insatisfechos, 43.3% satisfechos).
+
+Las variables categóricas mostraron predominio de clientes leales (81.7%), viajes de negocios (69.0%) y clases Business/Eco equilibradas (47.8% y 45.0%, respectivamente), con Eco Plus subrepresentada (7.2%); el género fue balanceado (50.8% mujeres).
+
+En las continuas, la edad promedió 39.4 años (mediana 40), las puntuaciones de satisfacción oscilaron entre 2.73 (WiFi) y 3.64 (Inflight Service, mediana 3-4/5), indicando niveles medios con tendencia positiva leve. Flight.Distance y retrasos exhibieron asimetría derecha marcada (mediana 843 km y 0 min; medias 1189 km y 14.8-15.2 min), con outliers extremos (>1500 min).
+
+Los histogramas confirmaron bimodalidad en ratings (colas bajas en WiFi/puertas) y colas largas en delays/distancia, sugiriendo heterogeneidad por tipo vuelo.
 
 ### EJERCICIO 2
 
@@ -203,7 +219,7 @@ resultados_chi2
 
 Llevad a cabo el ajuste de un modelo de regresión logística para clasificar a los individuos de acuerdo a la variable *Satisfaction*, utilizando la muestra de entrenamiento. Podéis utilizar términos no lineales como polinomios e interacciones para mejorar el ajuste. Justificad y explicad el modelo final al que se llega con este procedimiento. (2 puntos)
 
-```{r warning=FALSE,message=FALSE}
+```{r message=FALSE, warning=FALSE}
 #Regresión logística
 
 library(tidyverse)
@@ -332,9 +348,6 @@ vif(modelo_step)
 
 #Pseudo R2
 pR2(modelo_step)
-
-
-
 
 ```
 
