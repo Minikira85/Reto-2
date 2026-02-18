@@ -333,16 +333,6 @@ vif(modelo_step)
 #Pseudo R2
 pR2(modelo_step)
 
-# -------------------------
-#Diagnósticos finales 
-# -------------------------
-
-#Multicolinealidad
-vif(modelo_step)
-
-#Pseudo R2
-pR2(modelo_step)
-
 ```
 
 ### EJERCICIO 4
