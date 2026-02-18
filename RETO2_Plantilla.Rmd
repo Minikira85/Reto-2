@@ -203,17 +203,20 @@ resultados_chi2
 
 Llevad a cabo el ajuste de un modelo de regresión logística para clasificar a los individuos de acuerdo a la variable *Satisfaction*, utilizando la muestra de entrenamiento. Podéis utilizar términos no lineales como polinomios e interacciones para mejorar el ajuste. Justificad y explicad el modelo final al que se llega con este procedimiento. (2 puntos)
 
-```{r warning=FALSE,message=FALSE}
+```{r message=FALSE, warning=FALSE}
 #Regresión logística
 
 library(tidyverse)
+library(effects)
+library(car)
+library(pscl)
 
 # Cargar datos de entrenamiento
 train <- read_csv("train.csv")
 
 # Eliminar variable de registro si existe
 if ("id" %in% names(train)) {
-  train <- train |> select(-id)
+  train <- train |> dplyr::select(-id)
 }
 
 # Preparar variable respuesta
@@ -230,11 +233,11 @@ train <- train |> drop_na()
 # -------------------------
 
 vars_numericas <- train |>
-  select(where(is.numeric)) |>
+  dplyr::select(where(is.numeric)) |>
   names()
 
 vars_categoricas <- train |>
-  select(where(~ !is.numeric(.))) |>
+  dplyr::select(where(~ !is.numeric(.))) |>
   names() |>
   setdiff("Satisfaction")
 
@@ -242,8 +245,9 @@ vars_categoricas <- train |>
 train <- train |>
   mutate(across(all_of(vars_categoricas), factor))
 
-
+# -------------------------
 # Modelo logístico base
+# -------------------------
 
 modelo_logit_base <- glm(
   Satisfaction ~ .,
@@ -253,8 +257,18 @@ modelo_logit_base <- glm(
 
 summary(modelo_logit_base)
 
+AIC(modelo_logit_base)
 
+#Gráficos de efectos
+plot(allEffects(modelo_logit_base))
+
+#Contrastes globales
+Anova(modelo_logit_base, test = "Wald")
+anova(modelo_logit_base, test = "Chisq")
+
+# -------------------------
 # Modelo con no linealidad (polinomios grado 2)
+# -------------------------
 
 formula_poly <- as.formula(
   paste(
@@ -277,13 +291,46 @@ modelo_logit_poly <- glm(
 
 summary(modelo_logit_poly)
 
+AIC(modelo_logit_base, modelo_logit_poly) 
+plot(allEffects(modelo_logit_poly))
+
+# -------------------------
+#Modelo con interacciones
+# -------------------------
+
+modelo_logit_inter <- glm(
+  Satisfaction ~ Customer.Type * Class + Age + Flight.Distance, 
+  data = train, 
+  family = binomial
+) 
+
+summary(modelo_logit_inter) 
+
+AIC(modelo_logit_base, modelo_logit_inter) 
+plot(allEffects(modelo_logit_inter))
+
+# -------------------------
+#Selección de modelo (stepwise, reducción de dimensionalidad en ambas direcciones)
+# -------------------------
+modelo_step <- step(modelo_logit_base, direction = "both") 
+
+summary(modelo_step) 
+
+AIC(modelo_step)
 
 # Comparación de modelos
 
-AIC(modelo_logit_base, modelo_logit_poly)
+anova(modelo_logit_base, modelo_logit_poly, modelo_logit_inter, modelo_step, test = "Chisq")
 
+# -------------------------
+#Diagnósticos finales 
+# -------------------------
 
+#Multicolinealidad
+vif(modelo_step)
 
+#Pseudo R2
+pR2(modelo_step)
 
 ```
 
