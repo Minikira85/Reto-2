@@ -15,7 +15,8 @@ library(tidyverse)
 
 
 # Cargar datos de entrenamiento
-train <- read_csv("train.csv")
+train <- read_csv("train.csv") %>%
+  select(-id)  
 
 
 # Comprobar estructura de los datos
